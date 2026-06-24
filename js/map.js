@@ -1,8 +1,10 @@
 import { CONFIG } from './config.js';
+import { updateAIContextLocation } from './ai.js';
 
 let map;
 let placesService;
 let infoWindow;
+let geocoder;
 let markers = [];
 let customMarkers = [];
 let currentPositionMarker = null;
@@ -22,6 +24,7 @@ window.initMap = function() {
 
     infoWindow = new google.maps.InfoWindow();
     placesService = new google.maps.places.PlacesService(map);
+    geocoder = new google.maps.Geocoder();
 
     // Click event for adding new places
     map.addListener("click", (mapsMouseEvent) => {
@@ -34,7 +37,19 @@ window.initMap = function() {
 
     // Try finding places nearby initially
     searchNearbyPlaces(center);
+    updateLocationContext(center);
 };
+
+function updateLocationContext(location) {
+    if (!geocoder) return;
+    geocoder.geocode({ location: location }, (results, status) => {
+        let address = "ตำแหน่งที่ไม่ทราบชื่อ";
+        if (status === "OK" && results[0]) {
+            address = results[0].formatted_address;
+        }
+        updateAIContextLocation(address, location.lat, location.lng);
+    });
+}
 
 export function loadGoogleMaps() {
     const script = document.createElement('script');
@@ -74,6 +89,7 @@ export function getCurrentLocation(onSuccess, onError) {
                 map.setCenter(pos);
                 map.setZoom(15);
                 searchNearbyPlaces(pos);
+                updateLocationContext(pos);
                 if (onSuccess) onSuccess(pos);
             },
             () => {

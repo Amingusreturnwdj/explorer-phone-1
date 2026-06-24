@@ -1,13 +1,18 @@
 import { CONFIG } from './config.js';
 
-const SYSTEM_PROMPT = `คุณคือ "AI Mate" คู่หูนำเที่ยวที่เชี่ยวชาญด้านการแนะนำสถานที่ท่องเที่ยวและร้านอาหาร 
+const BASE_SYSTEM_PROMPT = `คุณคือ "AI Mate" คู่หูนำเที่ยวที่เชี่ยวชาญด้านการแนะนำสถานที่ท่องเที่ยวและร้านอาหาร 
 คุณจะคอยให้คำแนะนำเกี่ยวกับสถานที่ต่างๆ ในรูปแบบที่เป็นมิตร สนุกสนาน และกระตือรือร้นเหมือนเพื่อนสนิทพาเที่ยว 
 ตอบคำถามสั้นๆ กระชับ เข้าใจง่าย และใช้ภาษาไทยเป็นหลัก 
 ถ้าผู้ใช้ถามถึงสถานที่เจาะจง ให้ข้อมูลเกี่ยวกับบรรยากาศ จุดเด่น และข้อแนะนำในการไปเยือน`;
 
 let chatHistory = [
-    { role: "system", content: SYSTEM_PROMPT }
+    { role: "system", content: BASE_SYSTEM_PROMPT }
 ];
+
+export function updateAIContextLocation(address, lat, lng) {
+    const locationContext = `\n\n[ข้อมูลระบบ: ขณะนี้ผู้ใช้งานอยู่ที่ตำแหน่ง/บริเวณ "${address}" (Lat: ${lat}, Lng: ${lng}) ให้แนะนำสถานที่บริเวณนี้หากผู้ใช้ถามหาสถานที่ใกล้เคียง]`;
+    chatHistory[0].content = BASE_SYSTEM_PROMPT + locationContext;
+}
 
 export async function askAI(message, onMessageReceived, onError) {
     // Add user message to history
@@ -49,7 +54,8 @@ export async function askAI(message, onMessageReceived, onError) {
 }
 
 export function clearChatHistory() {
+    const currentSystemPrompt = chatHistory[0].content;
     chatHistory = [
-        { role: "system", content: SYSTEM_PROMPT }
+        { role: "system", content: currentSystemPrompt }
     ];
 }
