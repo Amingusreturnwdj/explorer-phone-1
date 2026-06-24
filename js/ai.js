@@ -1,12 +1,8 @@
 import { CONFIG } from './config.js';
-
-const BASE_SYSTEM_PROMPT = `คุณคือ "AI Mate" คู่หูนำเที่ยวที่เชี่ยวชาญด้านการแนะนำสถานที่ท่องเที่ยวและร้านอาหาร 
-คุณจะคอยให้คำแนะนำเกี่ยวกับสถานที่ต่างๆ ในรูปแบบที่เป็นมิตร สนุกสนาน และกระตือรือร้นเหมือนเพื่อนสนิทพาเที่ยว 
-ตอบคำถามสั้นๆ กระชับ เข้าใจง่าย และใช้ภาษาไทยเป็นหลัก 
-ถ้าผู้ใช้ถามถึงสถานที่เจาะจง ให้ข้อมูลเกี่ยวกับบรรยากาศ จุดเด่น และข้อแนะนำในการไปเยือน`;
+import { t, currentLang } from './i18n.js';
 
 let chatHistory = [
-    { role: "system", content: BASE_SYSTEM_PROMPT }
+    { role: "system", content: t('ai_system_prompt') }
 ];
 
 let aiContextState = {
@@ -41,31 +37,33 @@ export function updateAIContextCustomPlaces(places) {
 }
 
 function rebuildSystemPrompt() {
-    let context = `\n\n[ข้อมูลระบบเพื่อใช้ประกอบการตอบคำถาม]:\n`;
+    let context = `\n\n[System Data / ข้อมูลระบบ]:\n`;
     if (aiContextState.lat !== null) {
-        context += `- ตำแหน่งผู้ใช้งานปัจจุบัน: บริเวณ "${aiContextState.address}" (พิกัด Lat: ${aiContextState.lat}, Lng: ${aiContextState.lng})\n`;
+        context += `- Location / ตำแหน่งปัจจุบัน: "${aiContextState.address}" (Lat: ${aiContextState.lat}, Lng: ${aiContextState.lng})\n`;
     }
     
-    context += `- สถานที่และร้านอาหารรอบๆ ผู้ใช้ตอนนี้ (ข้อมูลจาก Google Maps):\n`;
+    context += `- Nearby places (Google Maps) / สถานที่รอบๆ:\n`;
     if (aiContextState.nearbyPlaces.length > 0) {
-        // จำกัดแค่ 10 ที่เพื่อไม่ให้ context ยาวเกินไป
         aiContextState.nearbyPlaces.slice(0, 10).forEach((p, i) => {
-            context += `  ${i+1}. ${p.name} (ดาว: ${p.rating})\n`;
+            context += `  ${i+1}. ${p.name} (Rating: ${p.rating})\n`;
         });
     } else {
-        context += `  (กำลังค้นหาหรือไม่มีข้อมูล)\n`;
+        context += `  (No data / กำลังค้นหา)\n`;
     }
 
     if (aiContextState.customPlaces.length > 0) {
-        context += `- สถานที่พิเศษที่ถูกเพิ่มไว้ในฐานข้อมูลแอพ (Local Database):\n`;
+        context += `- Local database places / สถานที่แนะนำพิเศษ:\n`;
         aiContextState.customPlaces.slice(0, 10).forEach((p, i) => {
-            context += `  * ${p.name} (รายละเอียด: ${p.description})\n`;
+            context += `  * ${p.name} (Detail: ${p.description})\n`;
         });
     }
 
-    context += `\n**คำสั่งสำคัญ**: \n1. ให้คุณอ้างอิงรายชื่อสถานที่ด้านบนนี้ในการแนะนำผู้ใช้เป็นหลัก เพราะเป็นสถานที่ที่มีอยู่จริงบนแผนที่รอบๆ ตัวผู้ใช้\n2. หากผู้ใช้ถามถึงสถานที่เจาะจง ให้ข้อมูลบรรยากาศและข้อแนะนำ หากเป็นสถานที่ในรายการข้างต้นให้ชื่นชมและสนับสนุนให้ไป`;
+    const commandTextEn = `\n**Important Command**: \n1. Recommend places primarily from the list above as they are physically near the user on the map.\n2. If the user asks about a specific place, give tips and atmosphere details. If it's in the list, strongly encourage visiting it.`;
+    const commandTextTh = `\n**คำสั่งสำคัญ**: \n1. ให้คุณอ้างอิงรายชื่อสถานที่ด้านบนนี้ในการแนะนำผู้ใช้เป็นหลัก เพราะเป็นสถานที่ที่มีอยู่จริงบนแผนที่รอบๆ ตัวผู้ใช้\n2. หากผู้ใช้ถามถึงสถานที่เจาะจง ให้ข้อมูลบรรยากาศและข้อแนะนำ หากเป็นสถานที่ในรายการข้างต้นให้ชื่นชมและสนับสนุนให้ไป`;
+
+    context += currentLang === 'en' ? commandTextEn : commandTextTh;
     
-    chatHistory[0].content = BASE_SYSTEM_PROMPT + context;
+    chatHistory[0].content = t('ai_system_prompt') + context;
 }
 
 export async function askAI(message, onMessageReceived, onError) {

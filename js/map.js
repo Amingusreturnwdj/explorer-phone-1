@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { updateAIContextLocation, updateAIContextPlaces } from './ai.js';
+import { t, currentLang } from './i18n.js';
 
 let map;
 let placesService;
@@ -42,8 +43,8 @@ window.initMap = function() {
 
 function updateLocationContext(location) {
     if (!geocoder) return;
-    geocoder.geocode({ location: location }, (results, status) => {
-        let address = "ตำแหน่งที่ไม่ทราบชื่อ";
+    geocoder.geocode({ location: location, language: currentLang }, (results, status) => {
+        let address = t('unknown_location');
         if (status === "OK" && results[0]) {
             address = results[0].formatted_address;
         }
@@ -53,7 +54,7 @@ function updateLocationContext(location) {
 
 export function loadGoogleMaps() {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=places,geometry&callback=initMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=places,geometry&language=${currentLang}&callback=initMap`;
     script.async = true;
     script.defer = true;
     document.head.appendChild(script);
@@ -64,7 +65,7 @@ let lastFetchedPosition = null;
 
 export function toggleTrackingLocation(onStateChange, onError) {
     if (!navigator.geolocation) {
-        if (onError) onError("เบราว์เซอร์ไม่รองรับ GPS");
+        if (onError) onError(t('alert_no_gps'));
         return;
     }
 
@@ -98,7 +99,7 @@ export function toggleTrackingLocation(onStateChange, onError) {
                         strokeColor: "#ffffff",
                         strokeWeight: 2,
                     },
-                    title: "ตำแหน่งปัจจุบันของคุณ"
+                    title: t('tooltip_location')
                 });
             }
 
@@ -141,7 +142,8 @@ export function searchNearbyPlaces(location) {
     const request = {
         location: location,
         radius: '2000',
-        type: ['restaurant', 'tourist_attraction']
+        type: ['restaurant', 'tourist_attraction'],
+        language: currentLang
     };
 
     placesService.nearbySearch(request, (results, status) => {
@@ -184,7 +186,8 @@ function createMarker(place) {
         // Fetch detailed info including reviews
         const request = {
             placeId: place.place_id,
-            fields: ['name', 'rating', 'reviews', 'formatted_address', 'url']
+            fields: ['name', 'rating', 'reviews', 'formatted_address', 'url'],
+            language: currentLang
         };
 
         placesService.getDetails(request, (placeDetails, status) => {
@@ -210,7 +213,7 @@ function createMarker(place) {
                     `;
                 }
                 if (placeDetails.url) {
-                    content += `<a href="${placeDetails.url}" target="_blank" style="color: #4F46E5; font-size: 0.85rem; text-decoration: none;">ดูบน Google Maps</a><br>`;
+                    content += `<a href="${placeDetails.url}" target="_blank" style="color: #4F46E5; font-size: 0.85rem; text-decoration: none;">${t('view_on_maps')}</a><br>`;
                 }
             } else {
                  if (place.rating) {
@@ -221,7 +224,7 @@ function createMarker(place) {
             content += `
                 <button onclick="window.askAIAvoidingGlobal('${place.name.replace(/'/g, "\\'")}')" 
                         style="margin-top: 10px; background: #4F46E5; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: 100%; font-family: 'Prompt', sans-serif;">
-                    <i class="fa-solid fa-robot"></i> ถาม AI เกี่ยวกับที่นี่
+                    <i class="fa-solid fa-robot"></i> ${t('ask_ai_btn')}
                 </button>
                 </div>
             `;
@@ -251,18 +254,18 @@ export function renderCustomPlaces(places, currentUserId) {
             let content = `
                 <div style="max-width: 250px; font-family: 'Prompt', sans-serif;">
                     <h3 style="margin: 0 0 5px 0; color: #10B981; font-size: 1.1rem;">${place.name}</h3>
-                    <p style="margin: 0 0 5px 0; font-size: 0.9rem;">${place.description || 'ไม่มีรายละเอียด'}</p>
-                    <p style="margin: 0 0 10px 0; font-size: 0.8rem; color: #666;">เพิ่มโดย: ${place.userName || 'Unknown'}</p>
+                    <p style="margin: 0 0 5px 0; font-size: 0.9rem;">${place.description || t('no_details')}</p>
+                    <p style="margin: 0 0 10px 0; font-size: 0.8rem; color: #666;">${t('added_by')}: ${place.userName || 'Unknown'}</p>
                     <button onclick="window.askAIAvoidingGlobal('${place.name.replace(/'/g, "\\'")}')" 
                             style="margin-bottom: 10px; background: #4F46E5; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: 100%; font-family: 'Prompt', sans-serif;">
-                        <i class="fa-solid fa-robot"></i> ถาม AI เกี่ยวกับที่นี่
+                        <i class="fa-solid fa-robot"></i> ${t('ask_ai_btn')}
                     </button>
             `;
             
             if (isOwner) {
                 content += `
                     <div style="display: flex; gap: 5px; margin-top: 5px;">
-                        <button onclick="window.editCustomPlace('${place.id}')" style="flex: 1; background: #F59E0B; color: white; border: none; padding: 5px; border-radius: 4px; cursor: pointer;">แก้ไข</button>
+                        <button onclick="window.editCustomPlace('${place.id}')" style="flex: 1; background: #F59E0B; color: white; border: none; padding: 5px; border-radius: 4px; cursor: pointer;">${t('btn_edit')}</button>
                     </div>
                 `;
             }

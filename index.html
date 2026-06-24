@@ -19,14 +19,15 @@
             <i class="fa-solid fa-earth-americas"></i> Explorer Mate
         </div>
         <div class="nav-actions">
-            <button id="btn-location" class="icon-btn tooltip" data-tooltip="ตำแหน่งปัจจุบัน"><i class="fa-solid fa-location-crosshairs"></i></button>
-            <button id="btn-add-place" class="icon-btn tooltip hidden" data-tooltip="เพิ่มสถานที่"><i class="fa-solid fa-plus"></i></button>
+            <button id="btn-lang" class="icon-btn tooltip" data-tooltip="Switch Language" data-i18n-tooltip="tooltip_lang"><i class="fa-solid fa-language"></i></button>
+            <button id="btn-location" class="icon-btn tooltip" data-tooltip="ตำแหน่งปัจจุบัน" data-i18n-tooltip="tooltip_location"><i class="fa-solid fa-location-crosshairs"></i></button>
+            <button id="btn-add-place" class="icon-btn tooltip hidden" data-tooltip="เพิ่มสถานที่" data-i18n-tooltip="tooltip_add_place"><i class="fa-solid fa-plus"></i></button>
             <div id="user-profile" class="user-profile hidden">
                 <img id="user-avatar" src="" alt="User" class="avatar">
-                <button id="btn-logout" class="icon-btn tooltip" data-tooltip="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <button id="btn-logout" class="icon-btn tooltip" data-tooltip="ออกจากระบบ" data-i18n-tooltip="tooltip_logout"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
-            <button id="btn-login" class="primary-btn"><i class="fa-brands fa-google"></i> เข้าสู่ระบบ</button>
-            <button id="btn-toggle-ai" class="icon-btn highlight-btn tooltip" data-tooltip="AI คู่หู"><i class="fa-solid fa-robot"></i></button>
+            <button id="btn-login" class="primary-btn"><i class="fa-brands fa-google"></i> <span data-i18n="btn_login">เข้าสู่ระบบ</span></button>
+            <button id="btn-toggle-ai" class="icon-btn highlight-btn tooltip" data-tooltip="AI คู่หู" data-i18n-tooltip="tooltip_ai"><i class="fa-solid fa-robot"></i></button>
         </div>
     </nav>
 
@@ -38,11 +39,11 @@
         </div>
         <div class="chat-container" id="chat-container">
             <div class="message ai">
-                <div class="msg-bubble">สวัสดีครับ! ผมคือ AI คู่หูของคุณ ให้ผมแนะนำสถานที่ท่องเที่ยวหรือร้านอาหารใกล้ๆ คุณไหมครับ?</div>
+                <div class="msg-bubble" data-i18n="ai_greeting">สวัสดีครับ! ผมคือ AI คู่หูของคุณ ให้ผมแนะนำสถานที่ท่องเที่ยวหรือร้านอาหารใกล้ๆ คุณไหมครับ?</div>
             </div>
         </div>
         <div class="chat-input-container">
-            <input type="text" id="chat-input" placeholder="ถามข้อมูลสถานที่ หรือขอคำแนะนำ...">
+            <input type="text" id="chat-input" placeholder="ถามข้อมูลสถานที่ หรือขอคำแนะนำ..." data-i18n-placeholder="chat_placeholder">
             <button id="btn-send-msg" class="primary-btn icon-only"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </aside>
@@ -51,33 +52,33 @@
     <div id="modal-place" class="modal-overlay hidden">
         <div class="modal glass-panel">
             <div class="modal-header">
-                <h3 id="modal-place-title">เพิ่มร้านค้า / สถานที่ท่องเที่ยว</h3>
+                <h3 id="modal-place-title" data-i18n="modal_add_title">เพิ่มร้านค้า / สถานที่ท่องเที่ยว</h3>
                 <button id="btn-close-modal" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <form id="form-place">
                     <input type="hidden" id="place-id">
                     <div class="form-group">
-                        <label for="place-name">ชื่อสถานที่ <span class="text-danger">*</span></label>
+                        <label for="place-name"><span data-i18n="label_place_name">ชื่อสถานที่</span> <span class="text-danger">*</span></label>
                         <input type="text" id="place-name" required>
                     </div>
                     <div class="form-group">
-                        <label for="place-desc">รายละเอียด / แนะนำ</label>
+                        <label for="place-desc" data-i18n="label_place_desc">รายละเอียด / แนะนำ</label>
                         <textarea id="place-desc" rows="3"></textarea>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="place-lat">ละติจูด <span class="text-danger">*</span></label>
+                            <label for="place-lat"><span data-i18n="label_lat">ละติจูด</span> <span class="text-danger">*</span></label>
                             <input type="number" step="any" id="place-lat" required readonly>
                         </div>
                         <div class="form-group">
-                            <label for="place-lng">ลองจิจูด <span class="text-danger">*</span></label>
+                            <label for="place-lng"><span data-i18n="label_lng">ลองจิจูด</span> <span class="text-danger">*</span></label>
                             <input type="number" step="any" id="place-lng" required readonly>
                         </div>
                     </div>
-                    <p class="text-muted text-sm"><i class="fa-solid fa-info-circle"></i> เลื่อนหมุดบนแผนที่เพื่อระบุตำแหน่ง</p>
-                    <button type="submit" class="primary-btn full-width mt-2">บันทึกสถานที่</button>
-                    <button type="button" id="btn-delete-place" class="danger-btn full-width mt-2 hidden">ลบสถานที่นี้</button>
+                    <p class="text-muted text-sm"><i class="fa-solid fa-info-circle"></i> <span data-i18n="modal_map_hint">เลื่อนหมุดบนแผนที่เพื่อระบุตำแหน่ง</span></p>
+                    <button type="submit" class="primary-btn full-width mt-2" data-i18n="btn_save_place">บันทึกสถานที่</button>
+                    <button type="button" id="btn-delete-place" class="danger-btn full-width mt-2 hidden" data-i18n="btn_delete_place">ลบสถานที่นี้</button>
                 </form>
             </div>
         </div>

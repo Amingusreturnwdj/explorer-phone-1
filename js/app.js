@@ -1,6 +1,7 @@
 import { loadGoogleMaps, toggleTrackingLocation, renderCustomPlaces } from './map.js';
 import { initAuth, login, logout, listenToPlaces, addPlace, updatePlace, deletePlace, currentUser } from './firebase.js';
 import { askAI, updateAIContextCustomPlaces } from './ai.js';
+import { applyTranslations, currentLang, setLanguage, t } from './i18n.js';
 
 // DOM Elements
 const btnLogin = document.getElementById('btn-login');
@@ -9,6 +10,7 @@ const userAvatar = document.getElementById('user-avatar');
 const btnLogout = document.getElementById('btn-logout');
 const btnLocation = document.getElementById('btn-location');
 const btnAddPlace = document.getElementById('btn-add-place');
+const btnLang = document.getElementById('btn-lang');
 
 // Sidebar Elements
 const aiSidebar = document.getElementById('ai-sidebar');
@@ -30,6 +32,7 @@ let customPlacesData = [];
 
 // Initialize Application
 function init() {
+    applyTranslations();
     loadGoogleMaps();
 
     // Setup Auth Listener
@@ -63,6 +66,12 @@ function init() {
 }
 
 function setupEventListeners() {
+    // Language Toggle
+    btnLang.addEventListener('click', () => {
+        const newLang = currentLang === 'th' ? 'en' : 'th';
+        setLanguage(newLang);
+    });
+
     // Auth
     btnLogin.addEventListener('click', async () => {
         try {
@@ -96,7 +105,7 @@ function setupEventListeners() {
                     btnLocation.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
                     btnLocation.classList.remove('tracking');
                     btnLocation.style.color = '';
-                    alert("ข้อผิดพลาด GPS: " + err);
+                    alert(t('alert_gps_error') + err);
                 }
             );
         } else {
@@ -110,7 +119,7 @@ function setupEventListeners() {
 
     // Add Place (Manual click, usually we want click on map instead)
     btnAddPlace.addEventListener('click', () => {
-        alert("กรุณาคลิกบนแผนที่ในตำแหน่งที่ต้องการเพิ่มสถานที่");
+        alert(t('alert_click_map'));
     });
 
     // Map Click Event
@@ -140,7 +149,7 @@ function setupEventListeners() {
         try {
             const submitBtn = formPlace.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerText;
-            submitBtn.innerText = 'กำลังบันทึก...';
+            submitBtn.innerText = t('btn_saving');
             submitBtn.disabled = true;
 
             if (placeId) {
@@ -153,18 +162,18 @@ function setupEventListeners() {
             submitBtn.innerText = originalText;
             submitBtn.disabled = false;
         } catch (err) {
-            alert("เกิดข้อผิดพลาด: " + err.message);
+            alert(t('alert_save_failed') + err.message);
         }
     });
 
     btnDeletePlace.addEventListener('click', async () => {
         const placeId = document.getElementById('place-id').value;
-        if (placeId && confirm("คุณแน่ใจหรือไม่ที่จะลบสถานที่นี้?")) {
+        if (placeId && confirm(t('alert_delete_confirm'))) {
             try {
                 await deletePlace(placeId);
                 modalPlace.classList.add('hidden');
             } catch (err) {
-                alert("ลบไม่สำเร็จ: " + err.message);
+                alert(t('alert_delete_failed') + err.message);
             }
         }
     });
@@ -189,7 +198,7 @@ function openPlaceModal(place = null, lat = null, lng = null) {
     document.getElementById('place-id').value = '';
     
     if (place) {
-        modalPlaceTitle.innerText = "แก้ไขสถานที่";
+        modalPlaceTitle.innerText = t('modal_edit_title');
         document.getElementById('place-id').value = place.id;
         document.getElementById('place-name').value = place.name;
         document.getElementById('place-desc').value = place.description || '';
@@ -197,7 +206,7 @@ function openPlaceModal(place = null, lat = null, lng = null) {
         document.getElementById('place-lng').value = place.lng;
         btnDeletePlace.classList.remove('hidden');
     } else {
-        modalPlaceTitle.innerText = "เพิ่มร้านค้า / สถานที่";
+        modalPlaceTitle.innerText = t('modal_add_title');
         document.getElementById('place-lat').value = lat;
         document.getElementById('place-lng').value = lng;
         btnDeletePlace.classList.add('hidden');
@@ -241,7 +250,7 @@ function handleChatSubmit() {
         },
         (error) => {
             document.getElementById(loadingId).remove();
-            appendMessage('ai', `<span class="text-danger">ขออภัย เกิดข้อผิดพลาดในการเชื่อมต่อ AI (${error})</span>`);
+            appendMessage('ai', `<span class="text-danger">${t('ai_error')} (${error})</span>`);
             chatInput.disabled = false;
         }
     );
@@ -250,7 +259,8 @@ function handleChatSubmit() {
 // Global functions for inline HTML calls (from InfoWindows)
 window.askAIAvoidingGlobal = function(placeName) {
     aiSidebar.classList.remove('closed');
-    const msg = `ช่วยแนะนำข้อมูล รีวิว หรือสิ่งน่าสนใจเกี่ยวกับ "${placeName}" หน่อยครับ`;
+    const actionWord = currentLang === 'en' ? "Please recommend or review" : "ช่วยแนะนำข้อมูล รีวิว หรือสิ่งน่าสนใจเกี่ยวกับ";
+    const msg = `${actionWord} "${placeName}"`;
     chatInput.value = msg;
     handleChatSubmit();
 };
