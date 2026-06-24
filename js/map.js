@@ -53,25 +53,40 @@ function updateLocationContext(location) {
 
 export function loadGoogleMaps() {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=places,geometry&callback=initMap`;
     script.async = true;
     script.defer = true;
     document.head.appendChild(script);
 }
 
-export function getCurrentLocation(onSuccess, onError) {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const pos = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                };
-                
-                if (currentPositionMarker) {
-                    currentPositionMarker.setMap(null);
-                }
+let watchId = null;
+let lastFetchedPosition = null;
 
+export function toggleTrackingLocation(onStateChange, onError) {
+    if (!navigator.geolocation) {
+        if (onError) onError("เบราว์เซอร์ไม่รองรับ GPS");
+        return;
+    }
+
+    if (watchId !== null) {
+        // Stop tracking
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        if (onStateChange) onStateChange(false);
+        return;
+    }
+
+    // Start tracking
+    watchId = navigator.geolocation.watchPosition(
+        (position) => {
+            const pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+            };
+            
+            if (currentPositionMarker) {
+                currentPositionMarker.setPosition(pos);
+            } else {
                 currentPositionMarker = new google.maps.Marker({
                     position: pos,
                     map: map,
@@ -83,22 +98,43 @@ export function getCurrentLocation(onSuccess, onError) {
                         strokeColor: "#ffffff",
                         strokeWeight: 2,
                     },
-                    title: "ตำแหน่งของคุณ"
+                    title: "ตำแหน่งปัจจุบันของคุณ"
                 });
+            }
 
-                map.setCenter(pos);
-                map.setZoom(15);
+            // Calculate distance to last fetched position
+            let distance = 9999;
+            if (lastFetchedPosition && google.maps.geometry) {
+                distance = google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(pos.lat, pos.lng),
+                    new google.maps.LatLng(lastFetchedPosition.lat, lastFetchedPosition.lng)
+                );
+            }
+
+            // Only fetch nearby places and reverse geocode if moved > 50 meters
+            // This prevents spamming the API and saves quota
+            if (!lastFetchedPosition || distance > 50) {
+                lastFetchedPosition = pos;
+                map.panTo(pos);
+                map.setZoom(16);
                 searchNearbyPlaces(pos);
                 updateLocationContext(pos);
-                if (onSuccess) onSuccess(pos);
-            },
-            () => {
-                if (onError) onError(true);
+            } else {
+                // Just pan to follow user smoothly without re-fetching everything
+                map.panTo(pos);
             }
-        );
-    } else {
-        if (onError) onError(false);
-    }
+
+            if (onStateChange) onStateChange(true);
+        },
+        (error) => {
+            if (onError) onError(error.message);
+        },
+        {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
+        }
+    );
 }
 
 export function searchNearbyPlaces(location) {

@@ -1,4 +1,4 @@
-import { loadGoogleMaps, getCurrentLocation, renderCustomPlaces } from './map.js';
+import { loadGoogleMaps, toggleTrackingLocation, renderCustomPlaces } from './map.js';
 import { initAuth, login, logout, listenToPlaces, addPlace, updatePlace, deletePlace, currentUser } from './firebase.js';
 import { askAI, updateAIContextCustomPlaces } from './ai.js';
 
@@ -74,16 +74,38 @@ function setupEventListeners() {
         await logout();
     });
 
-    // Location
+    // Location Tracking
     btnLocation.addEventListener('click', () => {
-        btnLocation.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-        getCurrentLocation(
-            () => { btnLocation.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>'; },
-            () => { 
-                btnLocation.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
-                alert("ไม่สามารถหาตำแหน่งได้ กรุณาเปิด Location Service");
-            }
-        );
+        const isTracking = btnLocation.classList.contains('tracking');
+        
+        if (!isTracking) {
+            btnLocation.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            toggleTrackingLocation(
+                (trackingStatus) => { 
+                    if (trackingStatus) {
+                        btnLocation.innerHTML = '<i class="fa-solid fa-location-crosshairs fa-beat"></i>';
+                        btnLocation.classList.add('tracking');
+                        btnLocation.style.color = 'var(--primary)';
+                    } else {
+                        btnLocation.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
+                        btnLocation.classList.remove('tracking');
+                        btnLocation.style.color = '';
+                    }
+                },
+                (err) => { 
+                    btnLocation.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
+                    btnLocation.classList.remove('tracking');
+                    btnLocation.style.color = '';
+                    alert("ข้อผิดพลาด GPS: " + err);
+                }
+            );
+        } else {
+            // Stop tracking
+            toggleTrackingLocation();
+            btnLocation.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
+            btnLocation.classList.remove('tracking');
+            btnLocation.style.color = '';
+        }
     });
 
     // Add Place (Manual click, usually we want click on map instead)
