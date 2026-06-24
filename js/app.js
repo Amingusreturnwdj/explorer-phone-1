@@ -236,7 +236,7 @@ function formatAIResponse(text) {
             </div>
         `;
         // Remove the tag from displayed text and append the clear button + legend
-        formattedText = formattedText.replace(routeRegex, `<br><button onclick="window.clearRoute()" style="background:#ef4444; color:white; border:none; border-radius:4px; font-size:0.8rem; padding: 6px 10px; margin-top:5px; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 5px rgba(0,0,0,0.2);"><i class="fa-solid fa-eraser"></i> ลบเส้นทาง</button>${legend}`);
+        formattedText = formattedText.replace(routeRegex, `<br><button onclick="window.clearRoute(this)" style="background:#ef4444; color:white; border:none; border-radius:4px; font-size:0.8rem; padding: 6px 10px; margin-top:5px; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 5px rgba(0,0,0,0.2);"><i class="fa-solid fa-eye-slash"></i> ซ่อนเส้นทาง</button>${legend}`);
     }
 
     formattedText = formattedText.replace(/\n/g, '<br>');

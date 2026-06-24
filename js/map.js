@@ -317,7 +317,7 @@ export function drawRoute(destinationName) {
     }
 
     const origin = lastFetchedPosition || currentPositionMarker.getPosition();
-    clearRoute(); // Clear any existing routes first
+    destroyRoutes(); // Clear any existing routes first
 
     // Try to find destination coordinates
     const allMarkers = [...markers, ...customMarkers];
@@ -342,6 +342,7 @@ export function drawRoute(destinationName) {
 
 // Store multiple renderers
 let routeRenderers = [];
+let routeVisible = true;
 
 function calculateAndDisplayMultipleRoutes(origin, destination) {
     if (!directionsService) return;
@@ -400,14 +401,35 @@ function getRouteClassByMode(mode) {
     return '';
 }
 
-export function clearRoute() {
-    // Legacy support for single renderer
+export function destroyRoutes() {
     if (directionsRenderer) {
         directionsRenderer.setDirections({routes: []});
     }
-    // Clear all multi-mode renderers
     routeRenderers.forEach(r => r.setMap(null));
     routeRenderers = [];
+    routeVisible = true;
+}
+
+export function clearRoute(btnElement) {
+    if (routeRenderers.length === 0) return;
+
+    routeVisible = !routeVisible;
+    
+    if (routeVisible) {
+        // Show routes
+        routeRenderers.forEach(r => r.setMap(map));
+        if (btnElement) {
+            btnElement.innerHTML = `<i class="fa-solid fa-eye-slash"></i> ซ่อนเส้นทาง`;
+            btnElement.style.background = '#ef4444';
+        }
+    } else {
+        // Hide routes
+        routeRenderers.forEach(r => r.setMap(null));
+        if (btnElement) {
+            btnElement.innerHTML = `<i class="fa-solid fa-eye"></i> แสดงเส้นทาง`;
+            btnElement.style.background = '#10b981';
+        }
+    }
 }
 window.drawRoute = drawRoute;
 window.clearRoute = clearRoute;
