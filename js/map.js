@@ -22,6 +22,9 @@ window.initMap = function() {
         zoom: 13,
         disableDefaultUI: true,
         zoomControl: true,
+        zoomControlOptions: {
+            position: window.innerWidth < 768 ? 7 : 9 // 7 = RIGHT_TOP, 9 = RIGHT_BOTTOM (using enum values to avoid undefined before maps loads)
+        }
     });
 
 
