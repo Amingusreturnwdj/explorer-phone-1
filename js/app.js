@@ -218,6 +218,19 @@ function openPlaceModal(place = null, lat = null, lng = null) {
 // AI Chat Logic
 function formatAIResponse(text) {
     let formattedText = text;
+    
+    // Check for [ROUTE: destination]
+    const routeRegex = /\[ROUTE:\s*(.+?)\]/i;
+    const match = formattedText.match(routeRegex);
+    if (match && match[1]) {
+        const destination = match[1].trim();
+        if (window.drawRoute) {
+            window.drawRoute(destination);
+        }
+        // Remove the tag from displayed text
+        formattedText = formattedText.replace(routeRegex, `<br><button onclick="window.clearRoute()" style="background:#ef4444; color:white; border:none; border-radius:4px; font-size:0.8rem; padding: 4px 8px; margin-top:5px; cursor:pointer;"><i class="fa-solid fa-eraser"></i> ลบเส้นทางบนแผนที่</button>`);
+    }
+
     formattedText = formattedText.replace(/\n/g, '<br>');
     
     // Highlight and link places

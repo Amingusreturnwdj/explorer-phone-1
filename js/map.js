@@ -6,6 +6,8 @@ let map;
 let placesService;
 let infoWindow;
 let geocoder;
+let directionsService;
+let directionsRenderer;
 let markers = [];
 let customMarkers = [];
 let currentPositionMarker = null;
@@ -26,6 +28,11 @@ window.initMap = function() {
     infoWindow = new google.maps.InfoWindow();
     placesService = new google.maps.places.PlacesService(map);
     geocoder = new google.maps.Geocoder();
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        map: map,
+        suppressMarkers: false
+    });
 
     // Click event for adding new places
     map.addListener("click", (mapsMouseEvent) => {
@@ -302,3 +309,65 @@ export function focusOnPlace(name) {
     }
 }
 window.focusOnPlace = focusOnPlace;
+
+export function drawRoute(destinationName) {
+    if (!lastFetchedPosition && !currentPositionMarker) {
+        alert(t('alert_no_gps') || "Please enable GPS first");
+        return;
+    }
+
+    const origin = lastFetchedPosition || currentPositionMarker.getPosition();
+
+    // Try to find destination coordinates
+    const allMarkers = [...markers, ...customMarkers];
+    const marker = allMarkers.find(m => m.title && m.title.toLowerCase().includes(destinationName.toLowerCase()));
+    
+    let destinationLocation;
+    if (marker) {
+        destinationLocation = marker.getPosition();
+        calculateAndDisplayRoute(origin, destinationLocation);
+    } else {
+        // If not in known markers, geocode it
+        geocoder.geocode({ address: destinationName }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+                destinationLocation = results[0].geometry.location;
+                calculateAndDisplayRoute(origin, destinationLocation);
+            } else {
+                console.error('Geocode was not successful: ' + status);
+            }
+        });
+    }
+}
+
+function calculateAndDisplayRoute(origin, destination) {
+    if (!directionsService || !directionsRenderer) return;
+    
+    directionsService.route({
+        origin: origin,
+        destination: destination,
+        travelMode: google.maps.TravelMode.TRANSIT
+    }, (response, status) => {
+        if (status === 'OK') {
+            directionsRenderer.setDirections(response);
+        } else if (status === 'ZERO_RESULTS') {
+            // Fallback to driving if transit not found
+            directionsService.route({
+                origin: origin,
+                destination: destination,
+                travelMode: google.maps.TravelMode.DRIVING
+            }, (res, stat) => {
+                if (stat === 'OK') {
+                    directionsRenderer.setDirections(res);
+                }
+            });
+        }
+    });
+}
+
+export function clearRoute() {
+    if (directionsRenderer) {
+        directionsRenderer.setDirections({routes: []});
+    }
+}
+window.drawRoute = drawRoute;
+window.clearRoute = clearRoute;
