@@ -37,14 +37,45 @@ window.initMap = function() {
         suppressMarkers: false
     });
 
-    // Click event for adding new places
+    let tempMarker = null;
+
+    // Click event for dropping manual pin
     map.addListener("click", (mapsMouseEvent) => {
         const latLng = mapsMouseEvent.latLng;
-        // Dispatch custom event to be handled by app.js
-        window.dispatchEvent(new CustomEvent('mapClick', { 
-            detail: { lat: latLng.lat(), lng: latLng.lng() }
-        }));
+        const lat = latLng.lat();
+        const lng = latLng.lng();
+
+        if (tempMarker) {
+            tempMarker.setMap(null);
+        }
+
+        tempMarker = new google.maps.Marker({
+            position: latLng,
+            map: map,
+            title: "พิกัดที่เลือก",
+            animation: google.maps.Animation.DROP
+        });
+
+        const content = `
+            <div style="padding: 5px; color: #333; text-align: center; min-width: 150px; font-family:var(--font-thai);">
+                <h3 style="margin: 0 0 12px 0; font-size: 1rem; color: #111827;"><i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> พิกัดที่คุณเลือก</h3>
+                <button onclick="window.drawRouteToLatLng(${lat}, ${lng})" style="background:var(--primary); color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; margin-bottom:8px; width:100%; transition:all 0.2s; font-weight:bold;">
+                    <i class="fa-solid fa-route"></i> นำทางมาที่นี่
+                </button>
+                <button onclick="window.triggerAddPlace(${lat}, ${lng})" style="background:#10b981; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; width:100%; transition:all 0.2s; font-weight:bold;">
+                    <i class="fa-solid fa-floppy-disk"></i> บันทึกเป็นสถานที่ใหม่
+                </button>
+            </div>
+        `;
+
+        infoWindow.setContent(content);
+        infoWindow.open(map, tempMarker);
     });
+
+    window.closeTempMarker = () => {
+        if(infoWindow) infoWindow.close();
+        if(tempMarker) tempMarker.setMap(null);
+    };
 
     // Try finding places nearby initially
     searchNearbyPlaces(center);
@@ -467,3 +498,26 @@ export function setMapTheme(isDark) {
     }
 }
 window.setMapTheme = setMapTheme;
+
+export function drawRouteToLatLng(lat, lng) {
+    if (!lastFetchedPosition && !currentPositionMarker) {
+        alert(t('alert_no_gps') || 'Please enable GPS first');
+        return;
+    }
+    const origin = lastFetchedPosition || currentPositionMarker.getPosition();
+    const destination = { lat, lng };
+    
+    destroyRoutes();
+    calculateAndDisplayMultipleRoutes(origin, destination);
+    
+    if(window.closeTempMarker) window.closeTempMarker();
+
+    // Dispatch event to app.js so it can show the time legend in chat
+    window.dispatchEvent(new CustomEvent('manualRoute', { detail: { lat, lng } }));
+}
+window.drawRouteToLatLng = drawRouteToLatLng;
+
+window.triggerAddPlace = (lat, lng) => {
+    if(window.closeTempMarker) window.closeTempMarker();
+    window.dispatchEvent(new CustomEvent('mapClick', { detail: { lat, lng } }));
+};

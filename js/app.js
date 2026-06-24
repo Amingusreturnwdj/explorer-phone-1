@@ -149,12 +149,37 @@ function setupEventListeners() {
         alert(t('alert_click_map'));
     });
 
-    // Map Click Event
+    // Map Click Event (for saving places)
     window.addEventListener('mapClick', (e) => {
-        if (!currentUser) return; // Only logged in users can add
+        if (!currentUser) {
+            alert(t('alert_login_required') || "Please login to save places");
+            return;
+        }
         
         const { lat, lng } = e.detail;
         openPlaceModal(null, lat, lng);
+    });
+
+    // Manual Route Event (for clicking "Navigate Here" on a dropped pin)
+    window.addEventListener('manualRoute', (e) => {
+        const { lat, lng } = e.detail;
+        
+        // Ensure sidebar is open
+        if (aiSidebar.classList.contains('hidden')) {
+            aiSidebar.classList.remove('hidden');
+            btnToggleAi.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+        }
+
+        const legend = `
+            <div style="margin-top: 10px; font-size: 0.8rem; background: var(--bg-light); padding: 8px; border-radius: 8px; line-height: 1.6; color: var(--text-dark);">
+                <strong><i class="fa-solid fa-map-location-dot"></i> เส้นทางไปยังพิกัดที่เลือก:</strong><br>
+                <span style="color:#3b82f6; font-weight:bold;">■ สีน้ำเงิน</span>: รถเมล์ / รถตู้ <i class="fa-solid fa-arrow-right"></i> <span class="route-time-transit" style="color:var(--primary); font-weight:bold;">กำลังคำนวณ...</span><br>
+                <span style="color:#f97316; font-weight:bold;">■ สีส้ม</span>: รถยนต์ / แท็กซี่ <i class="fa-solid fa-arrow-right"></i> <span class="route-time-driving" style="color:var(--primary); font-weight:bold;">กำลังคำนวณ...</span><br>
+                <span style="color:#22c55e; font-weight:bold;">■ สีเขียว</span>: เดินเท้า <i class="fa-solid fa-arrow-right"></i> <span class="route-time-walking" style="color:var(--primary); font-weight:bold;">กำลังคำนวณ...</span>
+            </div>
+        `;
+        const text = `นี่คือเส้นทางไปยังจุดที่คุณปักหมุดไว้ครับ!<br><button onclick="window.clearRoute(this)" style="background:#ef4444; color:white; border:none; border-radius:4px; font-size:0.8rem; padding: 6px 10px; margin-top:5px; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 5px rgba(0,0,0,0.2);"><i class="fa-solid fa-eye-slash"></i> ซ่อนเส้นทาง</button>${legend}`;
+        appendMessage(text, 'ai');
     });
 
     // Place Modal
