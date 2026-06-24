@@ -229,14 +229,14 @@ function formatAIResponse(text) {
         }
         const legend = `
             <div style="margin-top: 10px; font-size: 0.8rem; background: #f3f4f6; padding: 8px; border-radius: 8px; line-height: 1.6; color: #333;">
-                <strong><i class="fa-solid fa-map-location-dot"></i> สีเส้นทางบนแผนที่:</strong><br>
-                <span style="color:#3b82f6; font-weight:bold;">■ สีน้ำเงิน</span>: รถเมล์ / รถตู้ (Transit)<br>
-                <span style="color:#f97316; font-weight:bold;">■ สีส้ม</span>: รถยนต์ / แท็กซี่ / มอเตอร์ไซค์ (Driving)<br>
-                <span style="color:#22c55e; font-weight:bold;">■ สีเขียว</span>: เดินเท้า (Walking)
+                <strong><i class="fa-solid fa-map-location-dot"></i> สีเส้นทางและเวลา (จากจุดปัจจุบัน):</strong><br>
+                <span style="color:#3b82f6; font-weight:bold;">■ สีน้ำเงิน</span>: รถเมล์ / รถตู้ <i class="fa-solid fa-arrow-right"></i> <span class="route-time-transit" style="color:var(--primary); font-weight:bold;">กำลังคำนวณ...</span><br>
+                <span style="color:#f97316; font-weight:bold;">■ สีส้ม</span>: รถยนต์ / แท็กซี่ <i class="fa-solid fa-arrow-right"></i> <span class="route-time-driving" style="color:var(--primary); font-weight:bold;">กำลังคำนวณ...</span><br>
+                <span style="color:#22c55e; font-weight:bold;">■ สีเขียว</span>: เดินเท้า <i class="fa-solid fa-arrow-right"></i> <span class="route-time-walking" style="color:var(--primary); font-weight:bold;">กำลังคำนวณ...</span>
             </div>
         `;
         // Remove the tag from displayed text and append the clear button + legend
-        formattedText = formattedText.replace(routeRegex, `<br><button onclick="window.clearRoute()" style="background:#ef4444; color:white; border:none; border-radius:4px; font-size:0.8rem; padding: 6px 10px; margin-top:5px; cursor:pointer;"><i class="fa-solid fa-eraser"></i> ลบเส้นทาง</button>${legend}`);
+        formattedText = formattedText.replace(routeRegex, `<br><button onclick="window.clearRoute()" style="background:#ef4444; color:white; border:none; border-radius:4px; font-size:0.8rem; padding: 6px 10px; margin-top:5px; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 5px rgba(0,0,0,0.2);"><i class="fa-solid fa-eraser"></i> ลบเส้นทาง</button>${legend}`);
     }
 
     formattedText = formattedText.replace(/\n/g, '<br>');

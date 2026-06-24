@@ -357,6 +357,10 @@ function calculateAndDisplayMultipleRoutes(origin, destination) {
 }
 
 function displaySingleRoute(origin, destination, mode, color, suppressMarkers) {
+    const routeClass = getRouteClassByMode(mode);
+    const elementsToUpdate = document.querySelectorAll(routeClass);
+    elementsToUpdate.forEach(el => el.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> กำลังคำนวณ...`);
+
     directionsService.route({
         origin: origin,
         destination: destination,
@@ -368,14 +372,32 @@ function displaySingleRoute(origin, destination, mode, color, suppressMarkers) {
                 suppressMarkers: suppressMarkers,
                 polylineOptions: {
                     strokeColor: color,
-                    strokeOpacity: 0.7,
+                    strokeOpacity: 0.8,
                     strokeWeight: 6
                 }
             });
             renderer.setDirections(response);
             routeRenderers.push(renderer);
+            
+            const duration = response.routes[0].legs[0].duration.text;
+            const distance = response.routes[0].legs[0].distance.text;
+            
+            elementsToUpdate.forEach(el => {
+                el.innerText = `ใช้เวลา ${duration} (${distance})`;
+            });
+        } else {
+            elementsToUpdate.forEach(el => {
+                el.innerText = `ไม่มีเส้นทางรองรับ`;
+            });
         }
     });
+}
+
+function getRouteClassByMode(mode) {
+    if (mode === google.maps.TravelMode.TRANSIT) return '.route-time-transit';
+    if (mode === google.maps.TravelMode.DRIVING) return '.route-time-driving';
+    if (mode === google.maps.TravelMode.WALKING) return '.route-time-walking';
+    return '';
 }
 
 export function clearRoute() {
