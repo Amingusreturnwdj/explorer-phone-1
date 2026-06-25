@@ -19,6 +19,7 @@ const btnCloseAi = document.getElementById('btn-close-ai');
 const chatContainer = document.getElementById('chat-container');
 const chatInput = document.getElementById('chat-input');
 const btnSendMsg = document.getElementById('btn-send-msg');
+const btnMic = document.getElementById('btn-mic');
 
 // Modal Elements
 const modalPlace = document.getElementById('modal-place');
@@ -136,6 +137,64 @@ function setupEventListeners() {
     btnLogout.addEventListener('click', async () => {
         await logout();
     });
+
+    // Speech-to-Text Logic
+    let recognition = null;
+    let isRecording = false;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+
+        recognition.onstart = () => {
+            isRecording = true;
+            btnMic.classList.add('recording');
+            chatInput.placeholder = currentLang === 'en' ? 'Listening...' : 'กำลังฟัง...';
+        };
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            
+            if (finalTranscript || interimTranscript) {
+                chatInput.value = finalTranscript || interimTranscript;
+            }
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error', event.error);
+            isRecording = false;
+            btnMic.classList.remove('recording');
+            chatInput.placeholder = t('chat_placeholder');
+        };
+
+        recognition.onend = () => {
+            isRecording = false;
+            btnMic.classList.remove('recording');
+            chatInput.placeholder = t('chat_placeholder');
+        };
+
+        btnMic.addEventListener('click', () => {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.lang = currentLang === 'en' ? 'en-US' : 'th-TH';
+                recognition.start();
+            }
+        });
+    } else {
+        if (btnMic) btnMic.style.display = 'none'; // Hide if not supported
+    }
 
     // Location Tracking
     btnLocation.addEventListener('click', () => {
