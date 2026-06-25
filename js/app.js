@@ -173,6 +173,11 @@ function setupEventListeners() {
 
         recognition.onerror = (event) => {
             console.error('Speech recognition error', event.error);
+            if (event.error === 'not-allowed') {
+                alert('โปรดอนุญาตให้เบราว์เซอร์เข้าถึงไมโครโฟนของคุณ (Please allow microphone access in your browser settings).');
+            } else if (event.error !== 'no-speech') {
+                alert('Microphone Error: ' + event.error);
+            }
             isRecording = false;
             btnMic.classList.remove('recording');
             chatInput.placeholder = t('chat_placeholder');
