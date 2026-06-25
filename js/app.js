@@ -189,12 +189,17 @@ function setupEventListeners() {
             chatInput.placeholder = t('chat_placeholder');
         };
 
-        btnMic.addEventListener('click', () => {
+        btnMic.addEventListener('click', (e) => {
+            e.preventDefault();
             if (isRecording) {
-                recognition.stop();
+                try { recognition.stop(); } catch(err) {}
             } else {
-                recognition.lang = currentLang === 'en' ? 'en-US' : 'th-TH';
-                recognition.start();
+                try {
+                    recognition.lang = currentLang === 'en' ? 'en-US' : 'th-TH';
+                    recognition.start();
+                } catch(err) {
+                    alert('อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการสั่งงานด้วยเสียงครับ (Error: ' + err.message + ')');
+                }
             }
         });
     } else {
