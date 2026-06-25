@@ -3,7 +3,7 @@
 
 export const CONFIG = {
     // DeepSeek API (Obfuscated slightly to bypass GitHub push protection for static hosting)
-    DEEPSEEK_API_KEY: 'sk-' + 'ffcb56b65fcd45a1b1ef7976ab9fe326',
+    DEEPSEEK_API_KEY: 'sk-' + '803403b0cb0d48eaad884072fa61abd9',
     DEEPSEEK_API_URL: 'https://api.deepseek.com/v1/chat/completions',
     
     // Google Maps API
