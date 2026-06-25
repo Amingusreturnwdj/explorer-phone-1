@@ -76,6 +76,16 @@ function init() {
 }
 
 function setupEventListeners() {
+    // Unlock Speech Synthesis on first interaction (fixes silent TTS on some browsers)
+    document.body.addEventListener('click', () => {
+        if ('speechSynthesis' in window && !window.speechUnlocked) {
+            const unlockUtterance = new SpeechSynthesisUtterance('');
+            unlockUtterance.volume = 0; // Silent
+            window.speechSynthesis.speak(unlockUtterance);
+            window.speechUnlocked = true;
+        }
+    }, { once: true });
+
     // Lang Toggle
     btnLang.addEventListener('click', () => {
         const newLang = currentLang === 'th' ? 'en' : 'th';
@@ -114,16 +124,22 @@ function setupEventListeners() {
         
         // Show loading
         const loadingId = 'loading-' + Date.now();
-        appendMessage('<i class="fa-solid fa-spinner fa-spin"></i> ' + (t('ai_typing') || 'AI is planning...'), 'ai', loadingId);
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = `message ai`;
+        loadingDiv.id = loadingId;
+        loadingDiv.innerHTML = `<div class="msg-bubble"><i class="fa-solid fa-spinner fa-spin"></i> ${t('ai_typing') || 'AI is planning...'}</div>`;
+        chatContainer.appendChild(loadingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
         
         askAI(prompt, (aiResponse) => {
             const el = document.getElementById(loadingId);
             if (el) el.remove();
-            appendMessage(formatAIResponse(aiResponse), 'ai');
+            appendMessage('ai', aiResponse);
+            speakText(aiResponse);
         }, (err) => {
             const el = document.getElementById(loadingId);
             if (el) el.remove();
-            appendMessage(`<span class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> Error: ${err.message}</span>`, 'ai');
+            appendMessage('ai', `<span class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> Error: ${err.message}</span>`);
         });
     });
 
@@ -187,6 +203,11 @@ function setupEventListeners() {
             isRecording = false;
             btnMic.classList.remove('recording');
             chatInput.placeholder = t('chat_placeholder');
+            
+            // ส่งข้อความหา AI ทันทีเมื่อพูดจบ (Auto-submit)
+            if (chatInput.value.trim().length > 0) {
+                handleChatSubmit();
+            }
         };
 
         btnMic.addEventListener('click', (e) => {
@@ -363,6 +384,44 @@ function openPlaceModal(place = null, lat = null, lng = null) {
     modalPlace.classList.remove('hidden');
 }
 
+// Text-to-Speech (TTS) Logic
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        
+        let cleanText = text.replace(/\[ROUTE:\s*(.+?)\]/gi, 'เดี๋ยวผมแสดงเส้นทางบนแผนที่ให้นะครับ');
+        cleanText = cleanText.replace(/<[^>]*>?/gm, ''); // Remove HTML
+        cleanText = cleanText.replace(/[*_#]/g, ''); // Remove Markdown
+        
+        console.log("🗣️ AI is speaking: ", cleanText);
+        
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        const langCode = currentLang === 'en' ? 'en-US' : 'th-TH';
+        utterance.lang = langCode;
+        utterance.rate = 1.0; // Normal speed
+
+        const setVoiceAndSpeak = () => {
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => v.lang.includes(langCode) || v.lang.includes(langCode.substring(0, 2)));
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+                console.log("🗣️ Using voice: ", preferredVoice.name);
+            } else {
+                console.warn(`🗣️ No specific voice found for ${langCode}, using default.`);
+            }
+            window.speechSynthesis.speak(utterance);
+        };
+
+        if (window.speechSynthesis.getVoices().length === 0) {
+            window.speechSynthesis.onvoiceschanged = setVoiceAndSpeak;
+        } else {
+            setVoiceAndSpeak();
+        }
+    } else {
+        console.warn("🗣️ Speech Synthesis is not supported in this browser.");
+    }
+}
+
 // AI Chat Logic
 function formatAIResponse(text) {
     let formattedText = text;
@@ -387,7 +446,13 @@ function formatAIResponse(text) {
         formattedText = formattedText.replace(routeRegex, `<br><button onclick="window.clearRoute(this)" style="background:#ef4444; color:white; border:none; border-radius:4px; font-size:0.8rem; padding: 6px 10px; margin-top:5px; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 5px rgba(0,0,0,0.2);"><i class="fa-solid fa-eye-slash"></i> ซ่อนเส้นทาง</button>${legend}`);
     }
 
+    // Convert newlines to <br> FIRST so it doesn't break regex matching over newlines
     formattedText = formattedText.replace(/\n/g, '<br>');
+    
+    // Parse Markdown (Bold and Italics)
+    // Use [\s\S] and non-greedy match to catch everything between **
+    formattedText = formattedText.replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>');
+    formattedText = formattedText.replace(/\*([^\*<]+?)\*/g, '<em>$1</em>');
     
     // Highlight and link places
     const placeNames = getKnownPlaceNames();
@@ -439,6 +504,7 @@ function handleChatSubmit() {
         (response) => {
             document.getElementById(loadingId).remove();
             appendMessage('ai', response);
+            speakText(response);
             chatInput.disabled = false;
             chatInput.focus();
         },
@@ -487,12 +553,13 @@ window.askMenuRecommendations = function(placeName) {
         (response) => {
             const el = document.getElementById(loadingId);
             if (el) el.remove();
-            appendMessage(formatAIResponse(response), 'ai');
+            appendMessage('ai', response);
+            speakText(response);
         },
         (error) => {
             const el = document.getElementById(loadingId);
             if (el) el.remove();
-            appendMessage(`<span class="text-danger">Error: ${error}</span>`, 'ai');
+            appendMessage('ai', `<span class="text-danger">Error: ${error}</span>`);
         }
     );
 };
