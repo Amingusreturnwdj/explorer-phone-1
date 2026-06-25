@@ -72,8 +72,8 @@ function rebuildSystemPrompt() {
 `;
     context += pathumThaniBusData;
 
-    const commandTextEn = `\n**Important Command**: \n1. Recommend places primarily from the list above as they are physically near the user on the map.\n2. If the user asks about a specific place, give tips and atmosphere details. If it's in the list, strongly encourage visiting it.`;
-    const commandTextTh = `\n**คำสั่งสำคัญ**: \n1. ให้คุณอ้างอิงรายชื่อสถานที่ด้านบนนี้ในการแนะนำผู้ใช้เป็นหลัก เพราะเป็นสถานที่ที่มีอยู่จริงบนแผนที่รอบๆ ตัวผู้ใช้\n2. หากผู้ใช้ถามถึงสถานที่เจาะจง ให้ข้อมูลบรรยากาศและข้อแนะนำ หากเป็นสถานที่ในรายการข้างต้นให้ชื่นชมและสนับสนุนให้ไป`;
+    const commandTextEn = `\n**Important Command**: \n1. Recommend places primarily from the list above as they are physically near the user on the map.\n2. If the user asks about a specific place, give tips and atmosphere details. If it's in the list, strongly encourage visiting it.\n3. **CULTURAL & SCAM ALERT**: If the user asks about or is near temples (e.g., Grand Palace, Wat Pho) or major tourist areas, PROACTIVELY warn them about dress codes (no shorts/sleeveless) and common scams (e.g., "The temple is closed today", gem scams, or overpriced tuk-tuks).`;
+    const commandTextTh = `\n**คำสั่งสำคัญ**: \n1. ให้คุณอ้างอิงรายชื่อสถานที่ด้านบนนี้ในการแนะนำผู้ใช้เป็นหลัก เพราะเป็นสถานที่ที่มีอยู่จริงบนแผนที่รอบๆ ตัวผู้ใช้\n2. หากผู้ใช้ถามถึงสถานที่เจาะจง ให้ข้อมูลบรรยากาศและข้อแนะนำ หากเป็นสถานที่ในรายการข้างต้นให้ชื่นชมและสนับสนุนให้ไป\n3. **CULTURAL & SCAM ALERT**: หากผู้ใช้ถามถึงวัด (เช่น วัดพระแก้ว, วัดโพธิ์) หรือแหล่งท่องเที่ยวหลัก ให้คุณเตือนเรื่องการแต่งกาย (ห้ามขาสั้น/แขนกุด) และกลโกงยอดฮิต (เช่น หลอกว่าวัดปิด, หลอกขายอัญมณี, หรือรถตุ๊กตุ๊กที่คิดราคาแพงเกินจริง) อย่างสุภาพและสั้นๆ เสมอ`;
 
     context += currentLang === 'en' ? commandTextEn : commandTextTh;
     

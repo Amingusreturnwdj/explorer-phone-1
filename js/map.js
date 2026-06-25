@@ -264,6 +264,10 @@ function createMarker(place) {
             }
 
             content += `
+                <div style="display: flex; gap: 5px; margin-top: 10px;">
+                    <a href="grab://open" class="primary-btn" style="flex: 1; text-align: center; text-decoration: none; padding: 5px; font-size: 0.8rem; background: #00B14F;">Grab</a>
+                    <a href="bolt://" class="primary-btn" style="flex: 1; text-align: center; text-decoration: none; padding: 5px; font-size: 0.8rem; background: #2DD36F;">Bolt</a>
+                </div>
                 <button onclick="window.askAIAvoidingGlobal('${place.name.replace(/'/g, "\\'")}')" 
                         style="margin-top: 10px; background: #4F46E5; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: 100%; font-family: 'Prompt', sans-serif;">
                     <i class="fa-solid fa-robot"></i> ${t('ask_ai_btn')}
@@ -298,6 +302,14 @@ export function renderCustomPlaces(places, currentUserId) {
                     <h3 style="margin: 0 0 5px 0; color: #10B981; font-size: 1.1rem;">${place.name}</h3>
                     <p style="margin: 0 0 5px 0; font-size: 0.9rem;">${place.description || t('no_details')}</p>
                     <p style="margin: 0 0 10px 0; font-size: 0.8rem; color: var(--text-muted);">${t('added_by')}: ${place.userName || 'Unknown'}</p>
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <a href="grab://open" class="primary-btn" style="flex: 1; text-align: center; text-decoration: none; padding: 5px; font-size: 0.8rem; background: #00B14F;">Grab</a>
+                        <a href="bolt://" class="primary-btn" style="flex: 1; text-align: center; text-decoration: none; padding: 5px; font-size: 0.8rem; background: #2DD36F;">Bolt</a>
+                    </div>
+                    <button onclick="window.askMenuRecommendations('${place.name.replace(/'/g, "\\'")}')" 
+                            style="margin-bottom: 5px; background: #F43F5E; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: 100%; font-family: 'Prompt', sans-serif;">
+                        <i class="fa-solid fa-utensils"></i> Recommend Dishes
+                    </button>
                     <button onclick="window.askAIAvoidingGlobal('${place.name.replace(/'/g, "\\'")}')" 
                             style="margin-bottom: 10px; background: #4F46E5; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: 100%; font-family: 'Prompt', sans-serif;">
                         <i class="fa-solid fa-robot"></i> ${t('ask_ai_btn')}
@@ -492,4 +504,74 @@ window.drawRouteToLatLng = drawRouteToLatLng;
 window.triggerAddPlace = (lat, lng) => {
     if(window.closeTempMarker) window.closeTempMarker();
     window.dispatchEvent(new CustomEvent('mapClick', { detail: { lat, lng } }));
+};
+
+window.findNearestEmergency = (type) => {
+    if (!lastFetchedPosition && !currentPositionMarker) {
+        alert(t('alert_no_gps') || 'Please enable GPS first');
+        return;
+    }
+    const origin = lastFetchedPosition || currentPositionMarker.getPosition();
+    const request = {
+        location: origin,
+        radius: '5000',
+        type: [type]
+    };
+
+    placesService.nearbySearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+            results.slice(0, 5).forEach(place => {
+                const marker = new google.maps.Marker({
+                    map,
+                    position: place.geometry.location,
+                    title: place.name,
+                    icon: type === 'police' ? 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png' : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                });
+                
+                const iconHtml = type === 'police' ? '<i class="fa-solid fa-shield-halved" style="color: #3b82f6;"></i>' : '<i class="fa-solid fa-hospital" style="color: #10b981;"></i>';
+                
+                google.maps.event.addListener(marker, "click", () => {
+                    let content = `
+                        <div style="max-width: 200px; font-family: 'Prompt', sans-serif;">
+                            <h3 style="margin: 0 0 5px 0; font-size: 1.1rem;">${iconHtml} ${place.name}</h3>
+                            <button onclick="window.drawRouteToLatLng(${place.geometry.location.lat()}, ${place.geometry.location.lng()})" 
+                                    style="margin-top: 10px; background: #4F46E5; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: 100%;">
+                                <i class="fa-solid fa-route"></i> นำทาง
+                            </button>
+                        </div>
+                    `;
+                    infoWindow.setContent(content);
+                    infoWindow.open(map, marker);
+                });
+                markers.push(marker);
+            });
+            
+            // Zoom to show markers
+            map.setCenter(origin);
+            map.setZoom(13);
+        } else {
+            alert("Sorry, could not find any nearby " + type + ".");
+        }
+    });
+};
+
+window.shareLocation = () => {
+    if (!lastFetchedPosition && !currentPositionMarker) {
+        alert(t('alert_no_gps') || 'Please enable GPS first');
+        return;
+    }
+    const origin = lastFetchedPosition || currentPositionMarker.getPosition();
+    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${origin.lat()},${origin.lng()}`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'My Location - Explorer Mate',
+            text: 'Here is my current location:',
+            url: mapUrl
+        }).catch(err => console.error('Share failed:', err));
+    } else {
+        navigator.clipboard.writeText(mapUrl).then(() => {
+            alert("Location link copied to clipboard!");
+        });
+    }
 };

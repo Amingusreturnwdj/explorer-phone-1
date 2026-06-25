@@ -27,6 +27,15 @@ const formPlace = document.getElementById('form-place');
 const modalPlaceTitle = document.getElementById('modal-place-title');
 const btnDeletePlace = document.getElementById('btn-delete-place');
 
+// SOS & Plan Trip Elements
+const btnSos = document.getElementById('btn-sos');
+const modalSos = document.getElementById('modal-sos');
+const btnCloseSos = document.getElementById('btn-close-sos');
+const btnSosPolice = document.getElementById('btn-sos-police');
+const btnSosHospital = document.getElementById('btn-sos-hospital');
+const btnSosShare = document.getElementById('btn-sos-share');
+const btnPlanTrip = document.getElementById('btn-plan-trip');
+
 // State
 let customPlacesData = [];
 
@@ -66,13 +75,56 @@ function init() {
 }
 
 function setupEventListeners() {
-    // Language Toggle
+    // Lang Toggle
     btnLang.addEventListener('click', () => {
         const newLang = currentLang === 'th' ? 'en' : 'th';
         setLanguage(newLang);
     });
 
+    // SOS Logic
+    btnSos.addEventListener('click', () => {
+        modalSos.classList.remove('hidden');
+    });
+    btnCloseSos.addEventListener('click', () => {
+        modalSos.classList.add('hidden');
+    });
+    btnSosPolice.addEventListener('click', () => {
+        if(window.findNearestEmergency) window.findNearestEmergency('police');
+        modalSos.classList.add('hidden');
+    });
+    btnSosHospital.addEventListener('click', () => {
+        if(window.findNearestEmergency) window.findNearestEmergency('hospital');
+        modalSos.classList.add('hidden');
+    });
+    btnSosShare.addEventListener('click', () => {
+        if(window.shareLocation) window.shareLocation();
+    });
 
+    // Plan Trip Logic
+    btnPlanTrip.addEventListener('click', () => {
+        if (customPlacesData.length === 0) {
+            alert(t('alert_no_places') || "You haven't saved any places yet.");
+            return;
+        }
+        
+        aiSidebar.classList.remove('closed');
+        const prompt = `Based on these saved locations:\n${customPlacesData.map(p => '- ' + p.name).join('\n')}\n\nPlease create an optimal 1-day itinerary minimizing travel time in Bangkok. Suggest the order and provide a brief reason.`;
+        appendMessage(prompt, 'user');
+        
+        // Show loading
+        const loadingId = 'loading-' + Date.now();
+        appendMessage('<i class="fa-solid fa-spinner fa-spin"></i> ' + (t('ai_typing') || 'AI is planning...'), 'ai', loadingId);
+        
+        askAI(prompt, (aiResponse) => {
+            const el = document.getElementById(loadingId);
+            if (el) el.remove();
+            appendMessage(formatAIResponse(aiResponse), 'ai');
+        }, (err) => {
+            const el = document.getElementById(loadingId);
+            if (el) el.remove();
+            appendMessage(`<span class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> Error: ${err.message}</span>`, 'ai');
+        });
+    });
 
     // Auth
     btnLogin.addEventListener('click', async () => {
@@ -347,3 +399,31 @@ window.editCustomPlace = function(placeId) {
 
 // Start
 document.addEventListener('DOMContentLoaded', init);
+
+window.askMenuRecommendations = function(placeName) {
+    aiSidebar.classList.remove('closed');
+    const prompt = `Can you act as a menu translator and recommend some signature Thai dishes that this street food stall or restaurant ("${placeName}") might have? Please explain the dishes in English.`;
+    
+    appendMessage(prompt, 'user');
+    
+    const loadingId = 'loading-' + Date.now();
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'message ai';
+    loadingDiv.id = loadingId;
+    loadingDiv.innerHTML = '<div class="msg-bubble"><i class="fa-solid fa-ellipsis fa-fade"></i></div>';
+    chatContainer.appendChild(loadingDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    askAI(prompt, 
+        (response) => {
+            const el = document.getElementById(loadingId);
+            if (el) el.remove();
+            appendMessage(formatAIResponse(response), 'ai');
+        },
+        (error) => {
+            const el = document.getElementById(loadingId);
+            if (el) el.remove();
+            appendMessage(`<span class="text-danger">Error: ${error}</span>`, 'ai');
+        }
+    );
+};

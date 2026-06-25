@@ -37,7 +37,10 @@
         <div class="bottom-sheet-handle"></div>
         <div class="sidebar-header">
             <h3><i class="fa-solid fa-robot text-primary"></i> AI Mate</h3>
-            <button id="btn-close-ai" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+            <div style="display: flex; gap: 8px;">
+                <button id="btn-plan-trip" class="primary-btn" style="padding: 4px 8px; font-size: 0.8rem;" data-tooltip="จัดทริปอัตโนมัติ" data-i18n-tooltip="tooltip_plan_trip"><i class="fa-solid fa-route"></i> Plan Trip</button>
+                <button id="btn-close-ai" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
         </div>
         <div class="chat-container" id="chat-container">
             <div class="message ai">
@@ -82,6 +85,32 @@
                     <button type="submit" class="primary-btn full-width mt-2" data-i18n="btn_save_place">บันทึกสถานที่</button>
                     <button type="button" id="btn-delete-place" class="danger-btn full-width mt-2 hidden" data-i18n="btn_delete_place">ลบสถานที่นี้</button>
                 </form>
+            </div>
+        </div>
+    </div>
+    <!-- SOS Button -->
+    <button id="btn-sos" class="floating-btn bottom-left tooltip" style="background-color: var(--danger); color: white;" data-tooltip="ฉุกเฉิน (SOS)" data-i18n-tooltip="tooltip_sos"><i class="fa-solid fa-triangle-exclamation"></i></button>
+
+    <!-- SOS Modal -->
+    <div id="modal-sos" class="modal-overlay hidden">
+        <div class="modal glass-panel" style="border-top: 4px solid var(--danger);">
+            <div class="modal-header">
+                <h3 id="modal-sos-title" class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> SOS / ฉุกเฉิน</h3>
+                <button id="btn-close-sos" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 10px;">
+                <a href="tel:1155" class="danger-btn full-width" style="text-align: center; text-decoration: none; display: block;">
+                    <i class="fa-solid fa-phone"></i> โทรตำรวจท่องเที่ยว (1155)
+                </a>
+                <button id="btn-sos-police" class="primary-btn full-width" style="background-color: #3b82f6;">
+                    <i class="fa-solid fa-shield-halved"></i> ค้นหาสถานีตำรวจใกล้ที่สุด
+                </button>
+                <button id="btn-sos-hospital" class="primary-btn full-width" style="background-color: #10b981;">
+                    <i class="fa-solid fa-hospital"></i> ค้นหาโรงพยาบาลใกล้ที่สุด
+                </button>
+                <button id="btn-sos-share" class="primary-btn full-width" style="background-color: #f59e0b;">
+                    <i class="fa-solid fa-location-crosshairs"></i> แชร์พิกัดปัจจุบันให้เพื่อน
+                </button>
             </div>
         </div>
     </div>
